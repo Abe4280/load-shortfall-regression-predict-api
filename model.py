@@ -58,7 +58,51 @@ def _preprocess_data(data):
     # ---------------------------------------------------------------
 
     # ----------- Replace this code with your own preprocessing steps --------
-    predict_vector = feature_vector_df[['Madrid_wind_speed','Bilbao_rain_1h','Valencia_wind_speed']]
+
+    # Impute Velencia_pressure with the median. It has outliers, median is better.
+    valencia_pressure_median = 1014.6666666667
+    feature_vector_df['Valencia_pressure'].fillna(
+        valencia_pressure_median, inplace=True)
+
+    # Drop the 'Unnamed: 0' column, the index does the same thing. It's redundant.
+    feature_vector_df.drop(['Unnamed: 0'], axis=1, inplace=True)
+
+    # Remove the text from the 'Valencia_wind_deg' feature.
+    # We cannot relate this to the other wind_deg columns or vice versa. We do not have the scale.
+    feature_vector_df['Valencia_wind_deg'] = feature_vector_df['Valencia_wind_deg'].str.extract(
+        '(\d+)')
+
+    # Remove the text from the 'Seville_pressure' feature.
+    # We cannot relate this to the other pressure columns or vice versa. We do not have the scale.
+    feature_vector_df['Seville_pressure'] = feature_vector_df['Seville_pressure'].str.extract(
+        '(\d+)')
+
+    # Convert Seville_pressure Object to a numeric value
+    feature_vector_df['Seville_pressure'] = pd.to_numeric(
+        feature_vector_df['Seville_pressure'])
+    # Convert Valencia_wind_deg Object to a numeric value
+    feature_vector_df['Valencia_wind_deg'] = pd.to_numeric(
+        feature_vector_df['Valencia_wind_deg'])
+
+    # Convert the 'time' column to datetime64 and check it
+    feature_vector_df['time'] = pd.to_datetime(
+        feature_vector_df['time'], format='%Y-%m-%d %H:%M')
+
+    # Create new split time columns. Hour, Day, Week, Month, Quater, Year, Day_of_year
+    feature_vector_df['Hour'] = feature_vector_df['time'].dt.hour
+    feature_vector_df['Day'] = feature_vector_df['time'].dt.day
+    feature_vector_df['Day_of_year'] = feature_vector_df['time'].dt.dayofyear
+    feature_vector_df['Week'] = feature_vector_df['time'].dt.week
+    feature_vector_df['Month'] = feature_vector_df['time'].dt.month
+    feature_vector_df['Quarter'] = feature_vector_df['time'].dt.quarter
+    feature_vector_df['Year'] = feature_vector_df['time'].dt.year
+
+    # Drop the time feature
+    feature_vector_df.drop(['time'], axis=1, inplace=True)
+
+    predict_vector = feature_vector_df
+
+    # predict_vector = feature_vector_df[['Madrid_wind_speed','Bilbao_rain_1h','Valencia_wind_speed']]
     # ------------------------------------------------------------------------
 
     return predict_vector
